@@ -17,10 +17,7 @@ public class TimeSpan {
     }
 
     public TimeSpan(int hours, int minutes) {
-        if (hours < 0 || minutes < 0 || minutes > 59) {
-            throw new IllegalInputTimeSpanException("Invalid hours or minutes");
-        }
-
+        validateTime(hours, minutes);
         this.hours = hours;
         this.minutes = minutes;
     }
@@ -30,31 +27,15 @@ public class TimeSpan {
     }
 
     public void add(int hours, int minutes) {
-        if (hours < 0 || minutes < 0 || minutes > 59) {
-            throw new IllegalInputTimeSpanException("Invalid hours or minutes");
-        }
-
-        this.hours += hours;
-        this.minutes += minutes;
-
-        if (this.minutes >= 60) {
-            this.hours += this.minutes / 60;
-            this.minutes = this.minutes % 60;
-        }
+        validateTime(hours, minutes);
+        addMinutes(hours * 60 + minutes);
     }
 
     public void add(int minutes) {
         if (minutes < 0) {
             throw new IllegalInputTimeSpanException("Invalid minutes");
         }
-
-        this.hours += minutes / 60;
-        this.minutes += minutes % 60;
-
-        if (this.minutes >= 60) {
-            this.hours += this.minutes / 60;
-            this.minutes = this.minutes % 60;
-        }
+        addMinutes(minutes);
     }
 
     public void add(TimeSpan timeSpan) {
@@ -62,44 +43,16 @@ public class TimeSpan {
     }
 
     public void subtract(int hours, int minutes) {
-        if (hours < 0 || minutes < 0 || minutes > 59) {
-            throw new IllegalInputTimeSpanException("Invalid hours or minutes");
-        }
-
-        int totalCurrentMinutes = this.getTotalMinutes();
+        validateTime(hours, minutes);
         int totalSubtractMinutes = hours * 60 + minutes;
-
-        if (totalSubtractMinutes > totalCurrentMinutes) {
-            throw new NegativeTimeSpanException("Cannot subtract a larger TimeSpan");
-        }
-
-        this.hours -= hours;
-        this.minutes -= minutes;
-
-        if (this.minutes < 0) {
-            this.hours--;
-            this.minutes += 60;
-        }
+        subtractMinutes(totalSubtractMinutes);
     }
 
     public void subtract(int minutes) {
         if (minutes < 0) {
             throw new IllegalInputTimeSpanException("Invalid minutes");
         }
-
-        int totalCurrentMinutes = this.getTotalMinutes();
-
-        if (minutes > totalCurrentMinutes) {
-            throw new NegativeTimeSpanException("Cannot subtract a larger TimeSpan");
-        }
-
-        this.hours -= minutes / 60;
-        this.minutes -= minutes % 60;
-
-        if (this.minutes < 0) {
-            this.hours--;
-            this.minutes += 60;
-        }
+        subtractMinutes(minutes);
     }
 
     public void subtract(TimeSpan timeSpan) {
@@ -126,13 +79,35 @@ public class TimeSpan {
         if (factor <= 0) {
             throw new IllegalScaleFactorException("Factor must be greater than zero");
         }
+        addMinutes((this.hours * 60 + this.minutes) * (factor - 1)); // Множимо увесь час і додаємо результат.
+    }
 
-        this.hours *= factor;
-        this.minutes *= factor;
+    // Приватні методи
 
+    private void addMinutes(int minutesToAdd) {
+        this.hours += minutesToAdd / 60;
+        this.minutes += minutesToAdd % 60;
         if (this.minutes >= 60) {
             this.hours += this.minutes / 60;
             this.minutes = this.minutes % 60;
         }
     }
+
+    private void subtractMinutes(int minutesToSubtract) {
+        int totalCurrentMinutes = this.getTotalMinutes();
+        if (minutesToSubtract > totalCurrentMinutes) {
+            throw new NegativeTimeSpanException("Cannot subtract a larger TimeSpan");
+        }
+
+        totalCurrentMinutes -= minutesToSubtract;
+        this.hours = totalCurrentMinutes / 60;
+        this.minutes = totalCurrentMinutes % 60;
+    }
+
+    private void validateTime(int hours, int minutes) {
+        if (hours < 0 || minutes < 0 || minutes > 59) {
+            throw new IllegalInputTimeSpanException("Invalid hours or minutes");
+        }
+    }
 }
+
